@@ -51,7 +51,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-WORKSPACE_DIR = Path("/workspace")
+WORKSPACE_DIR = Path(__file__).resolve().parent.parent
 
 
 # ── Health ──────────────────────────────────────────────────────────────────

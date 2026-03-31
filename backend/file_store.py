@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-STORE_DIR = Path("/workspace/generated_documents")
+STORE_DIR = Path(__file__).resolve().parent.parent / "generated_documents"
 STORE_DIR.mkdir(exist_ok=True)
 
 # Validate document IDs to prevent path traversal
