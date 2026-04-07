@@ -200,7 +200,13 @@ async def generate_document(request: GenerateRequest):
         yield {"event": "metadata", "data": json.dumps(meta)}
         yield {"event": "done", "data": "{}"}
 
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(
+        event_generator(),
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ── Documents Library ───────────────────────────────────────────────────────
