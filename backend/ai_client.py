@@ -40,16 +40,18 @@ async def stream_document_generation(
     """
     full_prompt = system_prompt + "\n\n" + user_prompt
 
+    env = _get_claude_env()                                                                                                                                                                           
+    model = env.get("ANTHROPIC_MODEL", "sonnet")                                                                                                                                                                                                           
     proc = await asyncio.create_subprocess_exec(
         "claude",
         "-p", full_prompt,
         "--output-format", "stream-json",
         "--verbose",
         "--include-partial-messages",
-        "--model", "sonnet",
+        "--model", model,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=_get_claude_env(),
+        env=env,
     )
 
     result_text = ""
@@ -85,6 +87,8 @@ async def stream_document_generation(
 
             # Final result fallback (if streaming didn't yield anything)
             elif event_type == "result":
+                if event.get("is_error"):                                                                                                                                                             
+                    raise RuntimeError(f"Claude CLI error: {event.get('result', 'unknown error')[:200]}")
                 result_text = event.get("result", "")
 
         await proc.wait()
