@@ -20,7 +20,7 @@ def _get_claude_env() -> dict:
             with open(path) as f:
                 settings = json.load(f)
             settings_env = settings.get("env", {})
-            for key in ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN"):
+            for key in ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_MODEL"):
                 if key in settings_env:
                     env[key] = settings_env[key]
             break  # found a valid settings file
@@ -47,6 +47,7 @@ async def stream_document_generation(
         "-p", full_prompt,
         "--output-format", "stream-json",
         "--verbose",
+        "--bare",
         "--include-partial-messages",
         "--model", model,
         stdout=asyncio.subprocess.PIPE,

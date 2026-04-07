@@ -10,11 +10,13 @@ APP_DIR="$(dirname "$SCRIPT_DIR")"
 echo "==> Reading Anthropic credentials from Claude settings..."
 ANTHROPIC_BASE_URL=""
 ANTHROPIC_AUTH_TOKEN=""
+ANTHROPIC_MODEL=""
 
 for SETTINGS_FILE in /root/.claude/settings.json /dev/shm/claude_settings.json; do
   if [ -f "$SETTINGS_FILE" ]; then
     ANTHROPIC_BASE_URL=$(python3 -c "import json; d=json.load(open('$SETTINGS_FILE')); print(d.get('env',{}).get('ANTHROPIC_BASE_URL',''))" 2>/dev/null || true)
     ANTHROPIC_AUTH_TOKEN=$(python3 -c "import json; d=json.load(open('$SETTINGS_FILE')); print(d.get('env',{}).get('ANTHROPIC_AUTH_TOKEN',''))" 2>/dev/null || true)
+    ANTHROPIC_MODEL=$(python3 -c "import json; d=json.load(open('$SETTINGS_FILE')); print(d.get('env',{}).get('ANTHROPIC_MODEL',''))" 2>/dev/null || true)
     if [ -n "$ANTHROPIC_BASE_URL" ] && [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
       echo "    Found credentials in $SETTINGS_FILE"
       break
@@ -29,12 +31,13 @@ fi
 # Export globally so all child processes inherit them
 export ANTHROPIC_BASE_URL
 export ANTHROPIC_AUTH_TOKEN
+export ANTHROPIC_MODEL
 
 # ── Inject env vars into supervisord conf ─────────────────────────────────
 echo "==> Updating supervisord config with credentials..."
 sed "s|{{APP_DIR}}|$APP_DIR|g" "$SCRIPT_DIR/policydraft.conf" > /etc/supervisor/conf.d/policydraft.conf
 # Append Anthropic env vars to the environment line
-sed -i "s|^environment=PYTHONUNBUFFERED=\"1\"|environment=PYTHONUNBUFFERED=\"1\",ANTHROPIC_BASE_URL=\"$ANTHROPIC_BASE_URL\",ANTHROPIC_AUTH_TOKEN=\"$ANTHROPIC_AUTH_TOKEN\",CLAUDE_CODE_SIMPLE=\"1\"|" /etc/supervisor/conf.d/policydraft.conf
+sed -i "s|^environment=PYTHONUNBUFFERED=\"1\"|environment=PYTHONUNBUFFERED=\"1\",ANTHROPIC_BASE_URL=\"$ANTHROPIC_BASE_URL\",ANTHROPIC_AUTH_TOKEN=\"$ANTHROPIC_AUTH_TOKEN\",ANTHROPIC_MODEL=\"$ANTHROPIC_MODEL\",CLAUDE_CODE_SIMPLE=\"1\"|" /etc/supervisor/conf.d/policydraft.conf
 
 echo "==> Ensuring supervisord is running..."
 if ! pgrep -x supervisord &>/dev/null; then
