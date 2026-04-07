@@ -299,9 +299,15 @@ async def export_pdf(req: _ExportPdfRequest):
     )
 
 
-# ── Static Files (MUST be last) ────────────────────────────────────────────
+# ── Frontend (MUST be last) ────────────────────────────────────────────────
 
-app.mount("/", StaticFiles(directory=str(WORKSPACE_DIR), html=True), name="static")
+@app.get("/")
+async def serve_index():
+    return FileResponse(str(WORKSPACE_DIR / "index.html"))
+
+
+# Serve only static assets (images, etc.) — not policydraft.html
+app.mount("/static", StaticFiles(directory=str(WORKSPACE_DIR)), name="static")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,33 @@
 import asyncio
 import json
+import os
 from typing import AsyncGenerator
+
+
+def _get_claude_env() -> dict:
+    """
+    Build environment for the Claude CLI subprocess.
+    Reads ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN from
+    /root/.claude/settings.json (fallback /dev/shm/claude_settings.json)
+    and sets CLAUDE_CODE_SIMPLE=1 for fast startup.
+    """
+    env = os.environ.copy()
+    env["CLAUDE_CODE_SIMPLE"] = "1"
+
+    # Try to read credentials from settings files
+    for path in ("/root/.claude/settings.json", "/dev/shm/claude_settings.json"):
+        try:
+            with open(path) as f:
+                settings = json.load(f)
+            settings_env = settings.get("env", {})
+            for key in ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN"):
+                if key in settings_env:
+                    env[key] = settings_env[key]
+            break  # found a valid settings file
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+
+    return env
 
 
 async def stream_document_generation(
@@ -20,9 +47,9 @@ async def stream_document_generation(
         "--verbose",
         "--include-partial-messages",
         "--model", "sonnet",
-        "--bare",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        env=_get_claude_env(),
     )
 
     result_text = ""

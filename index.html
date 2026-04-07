@@ -1655,7 +1655,7 @@ async function generateDoc() {
       const { value, done } = await reader.read();
       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
 
       // Parse complete SSE events (separated by \n\n)
       const parts = buffer.split('\n\n');
